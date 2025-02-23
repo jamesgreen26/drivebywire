@@ -33,9 +33,9 @@ import static edn.stratodonut.drivebywire.compat.LinkedControllerWireServerHandl
 
 public class ControllerHubBlock extends Block implements MultiChannelWireSource {
     public static final VoxelShape BOTTOM_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
-    
+
     private static final List<String> channels = Arrays.stream(KEY_TO_CHANNEL).toList();
-    
+
     public ControllerHubBlock(Properties p_49795_) {
         super(p_49795_);
     }
@@ -48,11 +48,10 @@ public class ControllerHubBlock extends Block implements MultiChannelWireSource 
             HubItem.putHub(itemStack, blockPos);
             if (!level.isClientSide) {
                 level.playSound(null, blockPos, WireSounds.PLUG_IN.get(), SoundSource.BLOCKS, 1, 1);
+                player.displayClientMessage(Component.literal("Controller connected!"), true);
             }
 
             return InteractionResult.SUCCESS;
-        } else {
-            player.displayClientMessage(Component.literal("Item not compatible!"), true);
         }
 
         return super.use(p_60503_, level, blockPos, player, p_60507_, p_60508_);

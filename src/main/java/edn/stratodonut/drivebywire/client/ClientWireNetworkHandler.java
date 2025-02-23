@@ -14,6 +14,7 @@ import edn.stratodonut.drivebywire.network.WireNetworkRequestSyncPacket;
 import edn.stratodonut.drivebywire.network.WireRemoveConnectionPacket;
 import edn.stratodonut.drivebywire.util.BlockFace;
 import edn.stratodonut.drivebywire.util.FaceOutlines;
+import edn.stratodonut.drivebywire.util.ImmutableHashMap;
 import edn.stratodonut.drivebywire.wire.MultiChannelWireSource;
 import edn.stratodonut.drivebywire.wire.ShipWireNetworkManager;
 import edn.stratodonut.drivebywire.wire.graph.WireNetworkNode.WireNetworkSink;
@@ -53,9 +54,9 @@ import java.util.Set;
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class ClientWireNetworkHandler {
+    private static final ImmutableHashMap<Long, Map<String, Set<WireNetworkSink>>> EMPTY_MAP = new ImmutableHashMap<>();
     @Nonnull
-    @Deprecated
-    static Map<Long, Map<String, Set<WireNetworkSink>>> currentNetwork = new HashMap<>();
+    static ImmutableHashMap<Long, Map<String, Set<WireNetworkSink>>> currentNetwork = new ImmutableHashMap<>();
     @Nullable
     static BlockPos selectedSource;
     @Nonnull
@@ -97,7 +98,7 @@ public class ClientWireNetworkHandler {
             shipId = s.getId();
             changeChannel(world.getBlockState(selectedSource).getBlock(), true);
             if (clientManagers.containsKey(shipId)) {
-                currentNetwork = clientManagers.get(shipId).getNetwork();
+                currentNetwork = new ImmutableHashMap<>(clientManagers.get(shipId).getNetwork());
 
                 if (world.getBlockState(selectedSource).getBlock() instanceof WireNetworkBackupBlock) {
                     player.displayClientMessage(Components.literal(String.format("Relinking from %s", clientManagers.get(shipId).getName())), true);
@@ -128,6 +129,7 @@ public class ClientWireNetworkHandler {
             }
         }
 
+        event.setCancellationResult(InteractionResult.CONSUME);
         event.setCanceled(true);
     }
 
@@ -148,12 +150,12 @@ public class ClientWireNetworkHandler {
         Ship s = null;
         if (selectedSource == null) {
             HitResult hitResult = Minecraft.getInstance().hitResult;
-            if (hitResult instanceof BlockHitResult bhr) 
+            if (hitResult instanceof BlockHitResult bhr)
                 s = VSGameUtilsKt.getShipManagingPos(player.level(), bhr.getBlockPos());
         } else {
             s = VSGameUtilsKt.getShipManagingPos(player.level(), selectedSource);
         }
-         
+
         if (s == null) return;
 
         if (s.getId() != shipId) {
@@ -197,9 +199,9 @@ public class ClientWireNetworkHandler {
         Player p = Minecraft.getInstance().player;
         if (p != null) p.displayClientMessage(Components.literal("Selected Channel: " + currentChannel), true);
     }
-    
+
     public static void clearSource() {
-        currentNetwork.clear();
+        currentNetwork = EMPTY_MAP;
         selectedSource = null;
         currentChannel = ShipWireNetworkManager.WORLD_REDSTONE_CHANNEL;
         shipId = -1;
@@ -220,7 +222,7 @@ public class ClientWireNetworkHandler {
         incoming.deserialiseFromNbt(level, nbt, BlockPos.ZERO, Rotation.NONE);
         incoming.deserialiseForeignOnClient(level, nbt, BlockPos.ZERO, Rotation.NONE);
         if (selectedSource != null && id == shipId && clientManagers.containsKey(shipId))
-            currentNetwork = clientManagers.get(shipId).getNetwork();
+            currentNetwork = new ImmutableHashMap<>(clientManagers.get(shipId).getNetwork());
     }
 
     public interface LineColor {
@@ -284,7 +286,7 @@ public class ClientWireNetworkHandler {
                                 LineColor.SINK.SAME_SOURCE_DIFFERENT_CHANNEL.getColor(), LineColor.WIRE.SAME_SOURCE_DIFFERENT_CHANNEL.getColor());
                     }
                 }
-                
+
                 if (netFromSource.containsKey(currentChannel)) {
                     for (WireNetworkSink sinks : netFromSource.get(currentChannel)) {
                         drawConnection(level, selectedSource, BlockPos.of(sinks.getPosition()), Direction.from3DDataValue(sinks.getDirection()),

@@ -39,20 +39,19 @@ public class TweakedControllerHubBlock extends Block implements MultiChannelWire
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState p_60503_, @NotNull Level level, @NotNull BlockPos blockPos, 
+    public @NotNull InteractionResult use(@NotNull BlockState p_60503_, @NotNull Level level, @NotNull BlockPos blockPos,
                                           @NotNull Player player, @NotNull InteractionHand p_60507_, @NotNull BlockHitResult p_60508_) {
         ItemStack itemStack = player.getItemInHand(p_60507_);
         if (itemStack.getItem() instanceof TweakedControllerDuck) {
             HubItem.putHub(itemStack, blockPos);
             if (!level.isClientSide) {
                 level.playSound(null, blockPos, WireSounds.PLUG_IN.get(), SoundSource.BLOCKS, 1, 1);
+                player.displayClientMessage(Component.literal("Controller connected!"), true);
             }
-            
+
             return InteractionResult.SUCCESS;
-        } else {
-            player.displayClientMessage(Component.literal("Item not compatible!"), true);
         }
-        
+
         return super.use(p_60503_, level, blockPos, player, p_60507_, p_60508_);
     }
 

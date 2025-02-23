@@ -17,8 +17,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
+
+import org.jetbrains.annotations.Contract;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.core.impl.shadow.B;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import javax.annotation.Nonnull;
@@ -121,15 +124,15 @@ public class ShipWireNetworkManager {
         if (s1 instanceof ServerShip ss1 && s2 instanceof ServerShip ss2) {
             ShipWireNetworkManager m1 = ShipWireNetworkManager.getOrCreate(ss1);
             ShipWireNetworkManager m2 = ShipWireNetworkManager.getOrCreate(ss2);
-            
+
             if (!m1.equals(m2) && m1.name.equals(m2.name)) return CONNECTION_RESULT.FAIL_SAME_NAME;
             if (m1.size() >= 64) return CONNECTION_RESULT.FAIL_TOO_MANY_SOURCE;
-            
+
             WireNetworkSink node = new WireNetworkSink(out, dir, m2.name, ss2.getId(), m2.origin);
             Set<WireNetworkSink> existingSinks = m1.getOrCreateSinksOnChannel(in, channel);
             if (existingSinks.size() >= 64) return CONNECTION_RESULT.FAIL_TOO_MANY_SINK;
             if (!existingSinks.add(node)) return CONNECTION_RESULT.FAIL_EXISTS;
-            
+
             m2.nodes.put(BlockFace.of(out.asLong(), dir.get3DDataValue()), node);
             return CONNECTION_RESULT.OK;
         }
@@ -157,6 +160,9 @@ public class ShipWireNetworkManager {
                     .findFirst();
 
             removed.ifPresent(b -> {
+                if (b) {
+                    node.setInput(level, channel, 0);
+                }
                 if (m1.sinks.get(in.asLong()).get(channel).isEmpty()) {
                     m1.sinks.get(in.asLong()).remove(channel);
                 }
@@ -170,7 +176,11 @@ public class ShipWireNetworkManager {
     public static void removeAllFromSource(Level level, BlockPos in) {
         Ship s1 = VSGameUtilsKt.getShipManagingPos(level, in);
         if (s1 instanceof ServerShip ss1) {
-            ShipWireNetworkManager.get(ss1).ifPresent(m -> m.sinks.remove(in.asLong()));
+            ShipWireNetworkManager.get(ss1).ifPresent(m -> {
+                m.sinks.getOrDefault(in.asLong(), new HashMap<>())
+                        .forEach((channel, subnet) -> subnet.forEach(node -> node.setInput(level, channel, 0)));
+                m.sinks.remove(in.asLong());
+            });
         }
     }
 
@@ -296,7 +306,7 @@ public class ShipWireNetworkManager {
         BlockPos foreignOrigin = BlockPos.of(other.origin);
         for (String channel : foreignNet.getAllKeys()) {
             long[] inOutPairs = foreignNet.getLongArray(channel);
-            for (int i = 0; i < inOutPairs.length / 3; i += 3) {
+            for (int i = 0; i < inOutPairs.length - 2; i += 3) {
                 BlockPos start = BlockPos.of(inOutPairs[i]).offset(BlockPos.of(this.origin));
                 BlockPos end = BlockPos.of(inOutPairs[i + 1]).offset(foreignOrigin);
                 Direction dir = Direction.from3DDataValue((int) inOutPairs[i + 2]);
@@ -325,6 +335,7 @@ public class ShipWireNetworkManager {
         nodes.clear();
     }
 
+    @Contract(mutates = "this")
     public Map<Long, Map<String, Set<WireNetworkNode.WireNetworkSink>>> getNetwork() {
         return sinks;
     }
