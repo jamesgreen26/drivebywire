@@ -224,8 +224,6 @@ dependencies {
 
     implementation 'thedarkcolour:kotlinforforge:4.10.0'
 
-    implementation 'thedarkcolour:kotlinforforge:4.10.0'
-
     implementation fg.deobf("maven.modrinth:create-tweaked-controllers:UAbUIQOp")
 
     runtimeOnly fg.deobf("maven.modrinth:eureka:9gbnRz82")
