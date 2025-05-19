@@ -1,5 +1,6 @@
 package edn.stratodonut.drivebywire.util;
 
+import edn.stratodonut.drivebywire.DriveByWireMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -8,15 +9,21 @@ import net.minecraft.world.item.ItemStack;
 import java.util.function.Consumer;
 
 public class HubItem {
-    public static void putHub(ItemStack itemStack, BlockPos pos) {
+    private static final String HUB_KEY = DriveByWireMod.MOD_ID + "$Hub";
+
+    public static void putHub(ItemStack itemStack, String uuid) {
         CompoundTag nbt = itemStack.getOrCreateTag();
-        nbt.putLong("Hub", pos.asLong());
+        nbt.putString(HUB_KEY, uuid);
         itemStack.setTag(nbt);
     }
     
     public static void ifHubPresent(ItemStack itemStack, Consumer<BlockPos> runnable) {
-        if (itemStack.hasTag() && itemStack.getTag().contains("Hub", Tag.TAG_LONG)) {
-            runnable.accept(BlockPos.of(itemStack.getTag().getLong("Hub")));
+        CompoundTag tag = itemStack.getTag();
+        if (itemStack.hasTag() && tag != null && tag.contains(HUB_KEY, Tag.TAG_STRING)) {
+            BlockPos hubPos = DriveByWireMod.hubs.get(tag.getString(HUB_KEY));
+            if (hubPos != null) {
+                runnable.accept(hubPos);
+            }
         }
     }
 }
