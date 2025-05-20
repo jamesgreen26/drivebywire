@@ -27,6 +27,7 @@ public class DriveByWireMod
     public static final String MOD_ID = "drivebywire";
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID);
 
+    public static final String UUID_KEY = DriveByWireMod.MOD_ID + "$ControllerHubUUID";
     public static final ConcurrentHashMap<String, BlockPos> hubs = new ConcurrentHashMap<>();
 
     static {

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class ControllerHubBlockEntity  extends BlockEntity {
     private String UUID_VALUE = UUID.randomUUID().toString();
-    public static final String UUID_KEY = DriveByWireMod.MOD_ID + "$ControllerHubUUID";
+
 
     public String getUUID_VALUE() {
         return UUID_VALUE;
@@ -28,15 +28,15 @@ public class ControllerHubBlockEntity  extends BlockEntity {
     protected void saveAdditional(CompoundTag p_187471_) {
         super.saveAdditional(p_187471_);
         if (level != null) {
-            p_187471_.putString(UUID_KEY, UUID_VALUE);
+            p_187471_.putString(DriveByWireMod.UUID_KEY, UUID_VALUE);
         }
     }
 
     @Override
     public void load(CompoundTag p_155245_) {
         super.load(p_155245_);
-        if (p_155245_.contains(UUID_KEY, Tag.TAG_STRING)) {
-            UUID_VALUE = p_155245_.getString(UUID_KEY);
+        if (p_155245_.contains(DriveByWireMod.UUID_KEY, Tag.TAG_STRING)) {
+            UUID_VALUE = p_155245_.getString(DriveByWireMod.UUID_KEY);
         }
 
         DriveByWireMod.hubs.put(UUID_VALUE, this.getBlockPos());
